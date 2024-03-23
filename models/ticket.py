@@ -2,10 +2,10 @@ from pydantic import BaseModel
 
 
 class TicketData(BaseModel):
+    id: str
+    subject: str
     client_email: str
-    ticket_subject: str
-    ticket_id: str
-    ticket_status: str
+    status: str
 
 
 class TicketRequest(BaseModel):

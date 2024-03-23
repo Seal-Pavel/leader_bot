@@ -4,7 +4,7 @@ from datetime import datetime
 
 class User(BaseModel):
     id: int
-    birthday: datetime | None
+    birthday: datetime
     name: str
     email: str
     phone: str | None

@@ -1,32 +1,36 @@
-import os
+import httpx
 
-from urllib.parse import urljoin
-
-from typing import Tuple
+from datetime import datetime
 
 from utils.usedesk_api_client import UsedeskAPIClient
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-_USEDESK_API_HOST = os.getenv("USEDESK_API_HOST")
-USEDESK_API_CREATE_MSG = urljoin(_USEDESK_API_HOST, "create/comment")
-USEDESK_API_UPDATE_TICKET = urljoin(_USEDESK_API_HOST, "update/ticket")
-USEDESK_API_GET_FIELDS = urljoin(_USEDESK_API_HOST, "ticket/fields")
-
-USEDESK_API_TOKEN = os.getenv('USEDESK_API_TOKEN')
+from models.ticket import TicketData
 
 
 class UsedeskService:
     def __init__(self, api_client: UsedeskAPIClient):
         self.api_client = api_client
+        self.ticket: TicketData | None = None
 
     async def authenticate(self) -> None:
         await self.api_client.authenticate()
 
+    async def load_ticket(self, ticket_data):
+        self.ticket = ticket_data
+
+    async def reply_to_reactivated_user(self, ticket_data, birthday):
+        await self.load_ticket(ticket_data)
+
+        is_mistake_in_age = (datetime.now().year - birthday.year) < 12
+        if not is_mistake_in_age:
+            text, files = self.get_minor_notification()
+        else:
+            text, files = self.get_incorrect_birth_year_notification()
+
+        await self.send_message(ticket=self.ticket.id, message=text, fls=files)
+
     @staticmethod
-    def get_minor_notification() -> Tuple[str, list]:
+    def get_minor_notification() -> tuple[str, list]:
         text = """
             <p>Здравствуйте!</p>
             <p>Ваш профиль был деактивирован по причине того, что вы не загрузили сканы согласий родителей на обработку ваших персональных данных в свой профиль.<br/>
@@ -47,7 +51,7 @@ class UsedeskService:
         return text, files
 
     @staticmethod
-    def get_incorrect_birth_year_notification() -> Tuple[str, list]:
+    def get_incorrect_birth_year_notification() -> tuple[str, list]:
         text = """
             <p>Здравствуйте!</p>
             <p>Ваш профиль был деактивирован, так как в настройках указан некорректный год рождения.<br/>
@@ -65,3 +69,9 @@ class UsedeskService:
         """.strip()
         files = []
         return text, files
+
+    async def send_message(self, ticket, message, fls: list[str] = None, agent_id=247423) -> httpx.Response:
+        pass
+
+    async def update_ticket(self, ticket, category_lid, field_id=19402, status=2) -> httpx.Response:
+        pass

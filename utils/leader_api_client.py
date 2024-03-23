@@ -9,12 +9,6 @@ LEADER_ID_PAVEL_EMAIL = os.getenv("LEADER_ID_PAVEL_EMAIL")
 LEADER_ID_PAVEL_PASSWORD = os.getenv("LEADER_ID_PAVEL_PASSWORD")
 
 
-class UserNotFoundException(Exception):
-    def __init__(self, user):
-        self.user_query = user
-        super().__init__(f"404 User with query '{user}' not found.")
-
-
 class LeaderAPIClient(BaseAPIClient):
     def __init__(self, **kwargs):
         super().__init__(base_url=LEADER_ID_API_HOST, **kwargs)
@@ -32,18 +26,21 @@ class LeaderAPIClient(BaseAPIClient):
             "POST",
             url,
             should_retry=False,
+            allow_reauth=False,
             json=data)
         token = response.json()["data"]["access_token"]
         self.client.headers.update({"Authorization": f"Bearer {token}"})
 
-    async def make_request(self, method: str, path: str, **kwargs) -> httpx.Response:
+    async def make_request(self, method: str, path: str, allow_reauth=True, ** kwargs) -> httpx.Response:
         try:
             return await super().make_request(method, path, **kwargs)
 
         except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 401:  # Unauthorized
+            if exc.response.status_code == 401 and allow_reauth:
                 await self.authenticate()
                 return await super().make_request(method, path, **kwargs)
+            if exc.response.status_code == 422:
+                raise CaptchaNotSetException(server_response=exc.response.text)
             raise
 
     async def _search_users(self, query: str | int, count=1) -> list:
@@ -90,3 +87,15 @@ class LeaderAPIClient(BaseAPIClient):
 
     async def approve_user(self, user: int, check_existence=False) -> dict:
         return await self._perform_user_action(user, "/admin/users/approve-profile", check_existence)
+
+
+class UserNotFoundException(Exception):
+    def __init__(self, user):
+        self.user_query = user
+        super().__init__(f"404 User with query '{user}' not found.")
+
+
+class CaptchaNotSetException(Exception):
+    def __init__(self, server_response="Captcha is required"):
+        self.message = server_response
+        super().__init__(self.message)
