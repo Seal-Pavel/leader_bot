@@ -31,14 +31,14 @@ class LeaderAPIClient(BaseAPIClient):
         token = response.json()["data"]["access_token"]
         self.client.headers.update({"Authorization": f"Bearer {token}"})
 
-    async def make_request(self, method: str, path: str, allow_reauth=True, ** kwargs) -> httpx.Response:
+    async def make_request(self, method: str, endpoint: str, allow_reauth=True, ** kwargs) -> httpx.Response:
         try:
-            return await super().make_request(method, path, **kwargs)
+            return await super().make_request(method, endpoint, **kwargs)
 
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 401 and allow_reauth:
                 await self.authenticate()
-                return await super().make_request(method, path, **kwargs)
+                return await super().make_request(method, endpoint, **kwargs)
             if exc.response.status_code == 422:
                 raise CaptchaNotSetException(server_response=exc.response.text)
             raise
