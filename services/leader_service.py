@@ -1,6 +1,6 @@
 from models.user import User
 
-from utils.leader_api_client import LeaderAPIClient
+from utils.api_clients.leader_api_client import LeaderAPIClient
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -12,7 +12,7 @@ class LeaderServices:
         self.user_service: UserService | None = None
         self.event_service: EventService | None = None
 
-    async def authenticate(self, email=None, password=None) -> None:
+    async def authenticate(self, email, password) -> None:
         await self.api_client.authenticate(email, password)
         self.user_service = UserService(self.api_client)
         self.event_service = EventService(self.api_client)

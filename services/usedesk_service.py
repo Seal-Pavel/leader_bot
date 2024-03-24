@@ -1,10 +1,22 @@
+import os
 import httpx
+import aiofiles
 
-from datetime import datetime
-
-from utils.usedesk_api_client import UsedeskAPIClient
+from datetime import datetime, time
 
 from models.ticket import TicketData
+
+from utils.api_clients.usedesk_api_client import UsedeskAPIClient
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+CONSENT_PERSONAL_DATA_PATH = "../statics/files/Согласие на обработку персональных данных.docx"
+CONSENT_DISTRIBUTION_PERSONAL_DATA_PATH = "../statics/files/Согласие на распространение персональных данных.docx"
+
+USEDESK_PAVEL_ID = int(os.getenv("USEDESK_PAVEL_ID"))
+USEDESK_DENIS_ID = int(os.getenv("USEDESK_DENIS_ID"))
+USEDESK_NIKA_ID = int(os.getenv("USEDESK_NIKA_ID"))
 
 
 class UsedeskService:
@@ -12,13 +24,13 @@ class UsedeskService:
         self.api_client = api_client
         self.ticket: TicketData | None = None
 
-    async def authenticate(self) -> None:
-        await self.api_client.authenticate()
+    async def authenticate(self, token) -> None:
+        await self.api_client.authenticate(token)
 
     async def load_ticket(self, ticket_data):
         self.ticket = ticket_data
 
-    async def reply_to_reactivated_user(self, ticket_data, birthday):
+    async def reply_to_reactivated_user(self, ticket_data, birthday) -> None:
         await self.load_ticket(ticket_data)
 
         is_mistake_in_age = (datetime.now().year - birthday.year) < 12
@@ -27,10 +39,12 @@ class UsedeskService:
         else:
             text, files = self.get_incorrect_birth_year_notification()
 
-        await self.send_message(ticket=self.ticket.id, message=text, fls=files)
+        await self.send_message(message=text, ticket_id=self.ticket.id, files=files)
+        await self.update_ticket(ticket_id=self.ticket.id, category_lid="Редактирование профиля")
 
-    @staticmethod
-    def get_minor_notification() -> tuple[str, list]:
+        logger.info(f"The user with email {self.ticket.client_email} will receive a response ({self.ticket.id=}).")
+
+    async def get_minor_notification(self) -> tuple[str, list[tuple[str, bytes] | None]]:
         text = """
             <p>Здравствуйте!</p>
             <p>Ваш профиль был деактивирован по причине того, что вы не загрузили сканы согласий родителей на обработку ваших персональных данных в свой профиль.<br/>
@@ -46,12 +60,11 @@ class UsedeskService:
             <hr/>
             <p>Вы можете написать в наш чат-бот <a href="https://t.me/leaderid_bot" target="_blank">Telegram</a></p>
         """.strip()
-        files = ["statics/files/Согласие на обработку персональных данных.docx",
-                 "statics/files/Согласие на распространение персональных данных.docx"]
+
+        files = await self.prepare_files([CONSENT_PERSONAL_DATA_PATH, CONSENT_DISTRIBUTION_PERSONAL_DATA_PATH])
         return text, files
 
-    @staticmethod
-    def get_incorrect_birth_year_notification() -> tuple[str, list]:
+    async def get_incorrect_birth_year_notification(self) -> tuple[str, list[tuple[str, bytes] | None]]:
         text = """
             <p>Здравствуйте!</p>
             <p>Ваш профиль был деактивирован, так как в настройках указан некорректный год рождения.<br/>
@@ -67,11 +80,39 @@ class UsedeskService:
             <hr/>
             <p>Вы можете написать в наш чат-бот <a href="https://t.me/leaderid_bot" target="_blank">Telegram</a></p>
         """.strip()
-        files = []
+
+        files = await self.prepare_files([])
         return text, files
 
-    async def send_message(self, ticket, message, fls: list[str] = None, agent_id=247423) -> httpx.Response:
-        pass
+    @staticmethod
+    async def prepare_files(file_paths: list = None) -> list[tuple[str, bytes] | None]:
+        files = []
+        for file_path in file_paths:
+            async with aiofiles.open(file_path, 'rb') as f:
+                files.append((file_path, await f.read()))
+        return files
 
-    async def update_ticket(self, ticket, category_lid, field_id=19402, status=2) -> httpx.Response:
-        pass
+    @staticmethod
+    async def get_current_agent_id() -> int | None:
+        now = datetime.now()
+        weekday = now.weekday()
+        current_time = now.time()
+
+        # Pavel works on Saturday (5) and Sunday (6) from 09:00 to 23:00
+        if weekday in [5, 6] and time(9, 0) <= current_time <= time(23, 0):
+            return USEDESK_PAVEL_ID
+
+        # Denis works on weekdays from 18:00 to 23:00
+        if weekday in range(0, 5) and time(18, 0) <= current_time <= time(23, 0):
+            return USEDESK_DENIS_ID
+
+        # Nika works on weekdays from 10:00 to 18:00
+        if weekday in range(0, 5) and time(10, 0) <= current_time <= time(18, 0):
+            return USEDESK_NIKA_ID
+
+    async def send_message(self, message, ticket_id, files=None) -> httpx.Response:
+        agent_id = await self.get_current_agent_id()
+        return await self.api_client.send_message(message=message, ticket_id=ticket_id, files=files, agent_id=agent_id)
+
+    async def update_ticket(self, ticket_id, category_lid) -> httpx.Response:
+        return await self.api_client.update_ticket(ticket_id, category_lid)

@@ -39,7 +39,7 @@ class BaseAPIClient:
         while attempts > 0:
             attempts -= 1
             try:
-                await self.bucket.wait_for_token()  # Ожидаем доступность токена перед каждым запросом
+                await self.bucket.wait_for_token()  # Waiting for the token to be available before each request
                 response = await self.client.request(method, endpoint, **kwargs)
                 response.raise_for_status()
                 return response

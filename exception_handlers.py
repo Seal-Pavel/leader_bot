@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 
-from utils.leader_api_client import UserNotFoundException, CaptchaNotSetException
+from utils.api_clients.leader_api_client import UserNotFoundException, CaptchaNotSetException
 from utils.logger import get_logger
 
 logger = get_logger(__name__)

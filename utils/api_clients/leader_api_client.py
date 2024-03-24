@@ -2,11 +2,9 @@ import os
 import httpx
 
 from urllib.parse import urlencode
-from utils.base_api_client import BaseAPIClient
+from utils.api_clients.base_api_client import BaseAPIClient
 
 LEADER_ID_API_HOST = os.getenv("LEADER_ID_API_HOST")
-LEADER_ID_PAVEL_EMAIL = os.getenv("LEADER_ID_PAVEL_EMAIL")
-LEADER_ID_PAVEL_PASSWORD = os.getenv("LEADER_ID_PAVEL_PASSWORD")
 
 
 class LeaderAPIClient(BaseAPIClient):
@@ -16,13 +14,10 @@ class LeaderAPIClient(BaseAPIClient):
     async def update_token(self, token: str) -> None:
         self.client.headers.update({"Authorization": f"Bearer {token}"})
 
-    async def authenticate(self, email=None, password=None) -> None:
-        if email is None or password is None:
-            email, password = LEADER_ID_PAVEL_EMAIL, LEADER_ID_PAVEL_PASSWORD
-
+    async def authenticate(self, email, password) -> None:
         url = "/auth/login"
         data = {"email": email, "password": password}
-        response = await self.make_request(
+        response = await self._make_request(
             "POST",
             url,
             should_retry=False,
@@ -31,7 +26,7 @@ class LeaderAPIClient(BaseAPIClient):
         token = response.json()["data"]["access_token"]
         self.client.headers.update({"Authorization": f"Bearer {token}"})
 
-    async def make_request(self, method: str, endpoint: str, allow_reauth=True, ** kwargs) -> httpx.Response:
+    async def _make_request(self, method: str, endpoint: str, allow_reauth=True, **kwargs) -> httpx.Response:
         try:
             return await super().make_request(method, endpoint, **kwargs)
 
@@ -48,7 +43,7 @@ class LeaderAPIClient(BaseAPIClient):
                   "paginationSize": count,
                   "paginationPage": 1}
         full_url = f"/admin/users?{urlencode(params)}"
-        response = await self.make_request(
+        response = await self._make_request(
             "GET",
             full_url)
         users_data: list = response.json()['data']['_items']
@@ -65,7 +60,7 @@ class LeaderAPIClient(BaseAPIClient):
             user_id = user
 
         url = f"/users/{user_id}"
-        response = await self.make_request(
+        response = await self._make_request(
             "GET",
             url)
         return response.json()
@@ -76,7 +71,7 @@ class LeaderAPIClient(BaseAPIClient):
 
         data = {"userId": user_id}
         url = action_path
-        response = await self.make_request(
+        response = await self._make_request(
             "POST",
             url,
             json=data)
