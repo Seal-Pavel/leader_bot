@@ -26,9 +26,7 @@ class UserService:
         self.api_client = api_client
         self.user: User | None = None
 
-    async def reactivate(self, user: str | int) -> tuple[bool, str]:
-        await self.load_user(user)
-
+    async def reactivate(self) -> tuple[bool, str]:
         if await self.is_user_blocked() or self.user.id == 1127536:
             await self.unlocking_and_approve()
             logger.info(f'User with ID {self.user.id} and date of birth {self.user.birthday} has been unblocked.')

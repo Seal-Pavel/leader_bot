@@ -5,6 +5,7 @@ import aiofiles
 from datetime import datetime, time
 
 from models.ticket import TicketData
+from models.agents import Agent, Schedule
 
 from utils.api_clients.usedesk_api_client import UsedeskAPIClient
 from utils.logger import get_logger
@@ -94,21 +95,31 @@ class UsedeskService:
 
     @staticmethod
     async def get_current_agent_id() -> int | None:
+        agents = [
+            Agent(usedesk_id=USEDESK_PAVEL_ID,
+                  name="Pavel",
+                  schedule=[Schedule(weekdays=[5, 6],
+                                     start_time=time(9, 0),
+                                     end_time=time(23, 0))]),
+            Agent(usedesk_id=USEDESK_DENIS_ID,
+                  name="Denis",
+                  schedule=[Schedule(weekdays=list(range(0, 5)),
+                                     start_time=time(18, 0),
+                                     end_time=time(23, 0))]),
+            Agent(usedesk_id=USEDESK_NIKA_ID,
+                  name="Nika",
+                  schedule=[Schedule(weekdays=list(range(0, 5)),
+                                     start_time=time(10, 0),
+                                     end_time=time(18, 0))]),
+        ]
         now = datetime.now()
         weekday = now.weekday()
         current_time = now.time()
 
-        # Pavel works on Saturday (5) and Sunday (6) from 09:00 to 23:00
-        if weekday in [5, 6] and time(9, 0) <= current_time <= time(23, 0):
-            return USEDESK_PAVEL_ID
-
-        # Denis works on weekdays from 18:00 to 23:00
-        if weekday in range(0, 5) and time(18, 0) <= current_time <= time(23, 0):
-            return USEDESK_DENIS_ID
-
-        # Nika works on weekdays from 10:00 to 18:00
-        if weekday in range(0, 5) and time(10, 0) <= current_time <= time(18, 0):
-            return USEDESK_NIKA_ID
+        for agent in agents:
+            for schedule in agent.schedule:
+                if weekday in schedule.weekdays and schedule.start_time <= current_time <= schedule.end_time:
+                    return agent.usedesk_id
 
     async def send_message(self, message, ticket_id, files=None) -> httpx.Response:
         agent_id = await self.get_current_agent_id()

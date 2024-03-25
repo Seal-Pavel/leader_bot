@@ -32,6 +32,7 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 BOT_WEBHOOK_URL = os.getenv('BOT_WEBHOOK_URL')
 BOT_WEBHOOK_PATH = os.getenv('BOT_WEBHOOK_PATH')
+TEAM_TELEGRAM_CHAT_ID = os.getenv('TEAM_TELEGRAM_CHAT_ID')
 
 USEDESK_API_TOKEN = os.getenv('USEDESK_API_TOKEN')
 
@@ -72,17 +73,17 @@ async def startup():
 
     # Initialize and authenticate Leader-ID API client
     app.state.leader_api_client = LeaderAPIClient()  # Create API client
-    app.state.leader_services = LeaderServices(app.state.leader_api_client)  # Create service for API operations
+    app.state.leader_services = LeaderServices(app.state.leader_api_client)  # Create service
     await app.state.leader_services.authenticate(LEADER_ID_ADMIN_EMAIL, LEADER_ID_ADMIN_PASSWORD)  # Authenticate
 
     # Initialize and authenticate Usedesk API client
     app.state.usedesk_api_client = UsedeskAPIClient()  # Create API client
-    app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)  # Create service for API operations
+    app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)  # Create service
     await app.state.usedesk_service.authenticate(USEDESK_API_TOKEN)  # Authenticate
 
     # Initialize and authenticate Telegram API client
     app.state.telegram_api_client = TelegramAPIClient()  # Create API client
-    app.state.telegram_service = TelegramService(app.state.telegram_api_client)  # Create service for API operations
+    app.state.telegram_service = TelegramService(app.state.telegram_api_client, TEAM_TELEGRAM_CHAT_ID)  # Create service
     await app.state.telegram_service.authenticate(BOT_TOKEN)  # Authenticate
 
 

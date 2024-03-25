@@ -6,24 +6,23 @@ from datetime import timedelta
 
 from utils.api_clients.base_api_client import BaseAPIClient
 
-BOT_API_HOST = os.getenv("BOT_API_HOST")
+TELEGRAM_API_HOST = os.getenv("TELEGRAM_API_HOST")
 
 
 class TelegramAPIClient(BaseAPIClient):
 
     def __init__(self, **kwargs):
         super().__init__(
-            base_url=BOT_API_HOST,
+            base_url=TELEGRAM_API_HOST,
             limiter_rate=20,
             limiter_period=timedelta(minutes=1),
             **kwargs)
         self.token = None
 
-    async def authenticate(self, api_token=None) -> None:
-        if api_token:
-            self.token = api_token
+    async def authenticate(self, api_token) -> None:
+        self.token = api_token
 
-    async def send_message(self, text, chat_id, no_preview=True, no_notification=True) -> httpx.Response:
+    async def send_message(self, text, chat_id: str | int, no_preview=True, no_notification=True) -> httpx.Response:
         """
         https://telegram-bot-sdk.readme.io/reference/sendmessage
         """
