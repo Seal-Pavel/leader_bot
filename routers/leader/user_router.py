@@ -22,5 +22,5 @@ async def reactivate_and_notify_user(request: TicketRequest,
     is_reactivate, reactivate_message = await user_service.reactivate(request.data.client_email)
     if is_reactivate:
         await usedesk_service.reply_to_reactivated_user(request.data, user_service.user.birthday)
-
+        # <- telegram
     return {"message": reactivate_message}

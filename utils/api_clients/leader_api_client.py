@@ -1,7 +1,9 @@
 import os
 import httpx
 
+from datetime import timedelta
 from urllib.parse import urlencode
+
 from utils.api_clients.base_api_client import BaseAPIClient
 
 LEADER_ID_API_HOST = os.getenv("LEADER_ID_API_HOST")
@@ -9,7 +11,13 @@ LEADER_ID_API_HOST = os.getenv("LEADER_ID_API_HOST")
 
 class LeaderAPIClient(BaseAPIClient):
     def __init__(self, **kwargs):
-        super().__init__(base_url=LEADER_ID_API_HOST, **kwargs)
+        super().__init__(
+            base_url=LEADER_ID_API_HOST,
+            limiter_rate=5,
+            limiter_period=timedelta(seconds=1),
+            **kwargs)
+        self.email = None
+        self.password = None
 
     async def update_token(self, token: str) -> None:
         self.client.headers.update({"Authorization": f"Bearer {token}"})
@@ -25,6 +33,8 @@ class LeaderAPIClient(BaseAPIClient):
             json=data)
         token = response.json()["data"]["access_token"]
         self.client.headers.update({"Authorization": f"Bearer {token}"})
+        self.email = email
+        self.password = password
 
     async def _make_request(self, method: str, endpoint: str, allow_reauth=True, **kwargs) -> httpx.Response:
         try:
@@ -32,7 +42,7 @@ class LeaderAPIClient(BaseAPIClient):
 
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 401 and allow_reauth:
-                await self.authenticate()
+                await self.authenticate(self.email, self.password)
                 return await super().make_request(method, endpoint, **kwargs)
             if exc.response.status_code == 422:
                 raise CaptchaNotSetException(server_response=exc.response.text)

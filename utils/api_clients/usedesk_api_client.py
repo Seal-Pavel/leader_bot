@@ -1,4 +1,7 @@
 import os
+
+from datetime import timedelta
+
 from httpx import Response
 
 from utils.api_clients.base_api_client import BaseAPIClient
@@ -9,14 +12,18 @@ USEDESK_API_HOST = os.getenv("USEDESK_API_HOST")
 class UsedeskAPIClient(BaseAPIClient):
 
     def __init__(self, **kwargs):
-        super().__init__(base_url=USEDESK_API_HOST, **kwargs)
+        super().__init__(
+            base_url=USEDESK_API_HOST,
+            limiter_rate=5,
+            limiter_period=timedelta(seconds=1),
+            **kwargs)
         self.token = None
 
     async def authenticate(self, api_token=None) -> None:
         if api_token:
             self.token = api_token
 
-    async def make_request(self, method: str, endpoint: str, files=None, **kwargs) -> Response:
+    async def _make_request(self, method: str, endpoint: str, files=None, **kwargs) -> Response:
         # Add an authentication token to the request body
         data = kwargs.get("data", {})
         data["api_token"] = self.token
@@ -46,7 +53,7 @@ class UsedeskAPIClient(BaseAPIClient):
             "user_id": agent_id,
             "from": "user",
         }
-        return await self.make_request("POST", "/create/comment", data=data, files=files)
+        return await self._make_request("POST", "/create/comment", data=data, files=files)
 
     async def update_ticket(self,
                             ticket_id,
@@ -64,4 +71,4 @@ class UsedeskAPIClient(BaseAPIClient):
             "field_value": category_lid,
             "status": status,
         }
-        return await self.make_request("POST", "/update/ticket", data=data)
+        return await self._make_request("POST", "/update/ticket", data=data)
