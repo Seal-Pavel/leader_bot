@@ -36,8 +36,9 @@ TEAM_TELEGRAM_CHAT_ID = os.getenv('TEAM_TELEGRAM_CHAT_ID')
 
 USEDESK_API_TOKEN = os.getenv('USEDESK_API_TOKEN')
 
-LEADER_ID_ADMIN_EMAIL = os.getenv('LEADER_ID_ADMIN_EMAIL')
-LEADER_ID_ADMIN_PASSWORD = os.getenv('LEADER_ID_ADMIN_PASSWORD')
+ADMIN_EMAIL = os.getenv('LEADER_ID_ADMIN_EMAIL')
+ADMIN_PASSWORD = os.getenv('LEADER_ID_ADMIN_PASSWORD')
+TOKEN = os.getenv('LEADER_ID_BEARER_TOKEN')
 
 REDIS_URL = os.getenv('REDIS_URL')
 
@@ -71,20 +72,24 @@ async def startup():
     await bot.set_webhook(webhook_url)
     logger.info(f"Webhook URL: {webhook_url}")
 
-    # Initialize and authenticate Leader-ID API client
-    app.state.leader_api_client = LeaderAPIClient()  # Create API client
-    app.state.leader_services = LeaderServices(app.state.leader_api_client)  # Create service
-    await app.state.leader_services.authenticate(LEADER_ID_ADMIN_EMAIL, LEADER_ID_ADMIN_PASSWORD)  # Authenticate
+    try:
+        # Initialize and authenticate Leader-ID API client
+        app.state.leader_api_client = LeaderAPIClient()  # API client
+        app.state.leader_services = LeaderServices(app.state.leader_api_client)  # Service
+        await app.state.leader_services.authenticate(ADMIN_EMAIL, ADMIN_PASSWORD, token=TOKEN)  # Authenticate
 
-    # Initialize and authenticate Usedesk API client
-    app.state.usedesk_api_client = UsedeskAPIClient()  # Create API client
-    app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)  # Create service
-    await app.state.usedesk_service.authenticate(USEDESK_API_TOKEN)  # Authenticate
+        # Initialize and authenticate Usedesk API client
+        app.state.usedesk_api_client = UsedeskAPIClient()  # API client
+        app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)  # Service
+        await app.state.usedesk_service.authenticate(USEDESK_API_TOKEN)  # Authenticate
 
-    # Initialize and authenticate Telegram API client
-    app.state.telegram_api_client = TelegramAPIClient()  # Create API client
-    app.state.telegram_service = TelegramService(app.state.telegram_api_client, TEAM_TELEGRAM_CHAT_ID)  # Create service
-    await app.state.telegram_service.authenticate(BOT_TOKEN)  # Authenticate
+        # Initialize and authenticate Telegram API client
+        app.state.telegram_api_client = TelegramAPIClient()  # API client
+        app.state.telegram_service = TelegramService(app.state.telegram_api_client, TEAM_TELEGRAM_CHAT_ID)  # Sservice
+        await app.state.telegram_service.authenticate(BOT_TOKEN)  # Authenticate
+
+    except CaptchaNotSetException as exc:
+        logger.error(f"Authentication error: {exc}")
 
 
 @app.on_event("shutdown")

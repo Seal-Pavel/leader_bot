@@ -8,12 +8,12 @@ logger = get_logger(__name__)
 
 class LeaderServices:
     def __init__(self, api_client: LeaderAPIClient):
-        self.api_client = api_client
+        self.api_client: LeaderAPIClient = api_client
         self.user_service: UserService | None = None
         self.event_service: EventService | None = None
 
-    async def authenticate(self, email, password) -> None:
-        await self.api_client.authenticate(email, password)
+    async def authenticate(self, email, password, token=None) -> None:
+        await self.api_client.authenticate(email, password, token)
         self.user_service = UserService(self.api_client)
         self.event_service = EventService(self.api_client)
 
@@ -36,7 +36,9 @@ class UserService:
 
     async def load_user(self, user: str | int):
         user_json_data = await self.api_client.get_user(user)
-        self.user = User.model_validate(user_json_data)
+        self.user = User.model_validate(user_json_data).data
+        if self.user:
+            logger.info(f'User data with id {self.user.id} has been successfully loaded.')
 
     async def is_user_blocked(self) -> bool:
         if self.user is None:

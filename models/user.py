@@ -2,24 +2,28 @@ from pydantic import BaseModel, Extra
 from datetime import datetime
 
 
-class User(BaseModel):
+class UserData(BaseModel):
     id: int
-    birthday: datetime
-    name: str
-    email: str
-    phone: str | None
-    telegram: str | None
-    phoneConfirmed: bool
-    emailConfirmed: bool
-    phones: list | None
-    role: str
-    roleName: str
-    createdAt: datetime
+    email: str | None
+    last_name: str
+    first_name: str
+    father_name: str | None
     status: int
-    lastSeen: datetime
-    registrationType: str
-    createdByApi: str | None
-    uploadedDocuments: dict | None
+    gender: str
+    birthday: datetime
+    email_confirmed: bool
+    personal_data_agreement: bool
+    agreement: bool
+    last_seen: datetime
+    age: int
+    registrationAt: datetime
+
+    class Config:
+        extra = Extra.allow
+
+
+class User(BaseModel):
+    data: UserData
 
     class Config:
         extra = Extra.allow

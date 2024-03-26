@@ -21,14 +21,13 @@ async def reactivate_and_notify_user(request: TicketRequest,
                                      usedesk_service: UsedeskService = Depends(usedesk_service_dependency),
                                      telegram_service: TelegramService = Depends(telegram_service_dependency),
                                      ):
-    ticket_data = request.data
     user_id = user_service.user.id
     user_birthday = user_service.user.birthday
     notify_text = f'🔓 <a href="https://admin.leader-id.ru/users/{user_id}">{user_id}</a> ({user_birthday})'
 
     is_reactivate, reactivate_message = await user_service.reactivate()
     if is_reactivate:
-        await usedesk_service.reply_to_reactivated_user(ticket_data, user_birthday)
+        await usedesk_service.reply_to_reactivated_user(request, user_birthday)
         await telegram_service.user_reactivation_notification(notify_text)
 
     return {"message": reactivate_message}

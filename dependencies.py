@@ -12,7 +12,7 @@ def telegram_service_dependency(request: Request):
 async def user_service_dependency(request: Request):
     user_service = request.app.state.leader_services.user_service
     body = await request.json()
-    user_email = body['data']['client_email']
+    user_email = body['client_email']
     await user_service.load_user(user_email)
     return user_service
 

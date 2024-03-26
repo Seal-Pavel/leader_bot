@@ -4,7 +4,7 @@ import aiofiles
 
 from datetime import datetime, time
 
-from models.ticket import TicketData
+from models.ticket import TicketRequest
 from models.agents import Agent, Schedule
 
 from utils.api_clients.usedesk_api_client import UsedeskAPIClient
@@ -23,7 +23,7 @@ USEDESK_NIKA_ID = int(os.getenv("USEDESK_NIKA_ID"))
 class UsedeskService:
     def __init__(self, api_client: UsedeskAPIClient):
         self.api_client = api_client
-        self.ticket: TicketData | None = None
+        self.ticket: TicketRequest | None = None
 
     async def authenticate(self, token) -> None:
         await self.api_client.authenticate(token)

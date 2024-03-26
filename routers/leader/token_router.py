@@ -10,6 +10,7 @@ router = APIRouter()
 @router.post("/update-leader-token")
 async def update_token(request: Request, token: str = Body(..., embed=True)):
     if not token:
+        logger.info("TEST")
         raise HTTPException(status_code=400, detail="Token is missing")
 
     await request.app.state.leader_services.update_token(token)
