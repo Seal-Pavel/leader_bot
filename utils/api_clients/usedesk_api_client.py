@@ -1,6 +1,9 @@
 import os
 
+import aiofiles
+
 from datetime import timedelta
+from pathlib import Path
 
 from httpx import Response
 
@@ -23,26 +26,37 @@ class UsedeskAPIClient(BaseAPIClient):
         if api_token:
             self.token = api_token
 
-    async def _make_request(self, method: str, endpoint: str, files=None, **kwargs) -> Response:
+    async def _make_request(self,
+                            method: str,
+                            endpoint: str,
+                            file_paths: list[Path] | None = None,
+                            **kwargs) -> Response:
         # Add an authentication token to the request body
         data = kwargs.get("data", {})
         data["api_token"] = self.token
         kwargs["data"] = data
 
         # Prepare files, if available
+        file_paths = await self.prepare_files(file_paths) if file_paths else None
+
+        return await super().make_request(method, endpoint, files=file_paths, **kwargs)
+
+    @staticmethod
+    async def prepare_files(file_paths) -> list[tuple[str, tuple[str, bytes]]] | None:
         prepared_files = []
-        if files:
-            for file_path, file_content in files:
-                file_name = file_path.split("/")[-1]
+        for file_path in file_paths:
+            async with aiofiles.open(file_path, 'rb') as f:
+                file_name = file_path.name
+                file_content = await f.read()
                 prepared_files.append(('files[]', (file_name, file_content)))
 
-        return await super().make_request(method, endpoint, files=prepared_files, **kwargs)
+        return prepared_files if prepared_files else None
 
     async def send_message(self,
                            message,
                            ticket_id,
                            agent_id,
-                           files: list[tuple[str, bytes] | None] = None):
+                           files: list[Path] | None = None):
         """
         https://api.usedocs.ru/article/33740
         """

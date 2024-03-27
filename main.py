@@ -1,5 +1,7 @@
 import os
 
+from pathlib import Path
+
 import httpx
 
 from fastapi import FastAPI, Request, HTTPException
@@ -28,6 +30,8 @@ from bot.bot import router
 from dotenv import load_dotenv
 
 load_dotenv()
+
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 BOT_WEBHOOK_URL = os.getenv('BOT_WEBHOOK_URL')

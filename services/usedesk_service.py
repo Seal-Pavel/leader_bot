@@ -1,8 +1,11 @@
 import os
 import httpx
-import aiofiles
+
+from pathlib import Path
 
 from datetime import datetime, time
+
+from main import PROJECT_ROOT
 
 from models.ticket import TicketRequest
 from models.agents import Agent, Schedule
@@ -12,8 +15,8 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-CONSENT_PERSONAL_DATA_PATH = "../statics/files/Согласие на обработку персональных данных.docx"
-CONSENT_DISTRIBUTION_PERSONAL_DATA_PATH = "../statics/files/Согласие на распространение персональных данных.docx"
+PERS_DATA_AGREE_PATH = PROJECT_ROOT / "statics/files/Согласие на обработку персональных данных.docx"
+PERS_DATA_AGREE_AND_DIST_PATH = PROJECT_ROOT / "statics/files/Согласие на распространение персональных данных.docx"
 
 USEDESK_PAVEL_ID = int(os.getenv("USEDESK_PAVEL_ID"))
 USEDESK_DENIS_ID = int(os.getenv("USEDESK_DENIS_ID"))
@@ -36,16 +39,17 @@ class UsedeskService:
 
         is_mistake_in_age = (datetime.now().year - birthday.year) < 12
         if not is_mistake_in_age:
-            text, files = self.get_minor_notification()
+            text, files = await self.get_minor_notification()
         else:
-            text, files = self.get_incorrect_birth_year_notification()
+            text, files = await self.get_incorrect_birth_year_notification()
 
         await self.send_message(message=text, ticket_id=self.ticket.id, files=files)
         await self.update_ticket(ticket_id=self.ticket.id, category_lid="Редактирование профиля")
 
         logger.info(f"The user with email {self.ticket.client_email} will receive a response ({self.ticket.id=}).")
 
-    async def get_minor_notification(self) -> tuple[str, list[tuple[str, bytes] | None]]:
+    @staticmethod
+    async def get_minor_notification() -> tuple[str, list[Path]]:
         text = """
             <p>Здравствуйте!</p>
             <p>Ваш профиль был деактивирован по причине того, что вы не загрузили сканы согласий родителей на обработку ваших персональных данных в свой профиль.<br/>
@@ -62,10 +66,11 @@ class UsedeskService:
             <p>Вы можете написать в наш чат-бот <a href="https://t.me/leaderid_bot" target="_blank">Telegram</a></p>
         """.strip()
 
-        files = await self.prepare_files([CONSENT_PERSONAL_DATA_PATH, CONSENT_DISTRIBUTION_PERSONAL_DATA_PATH])
+        files = [PERS_DATA_AGREE_PATH, PERS_DATA_AGREE_AND_DIST_PATH]
         return text, files
 
-    async def get_incorrect_birth_year_notification(self) -> tuple[str, list[tuple[str, bytes] | None]]:
+    @staticmethod
+    async def get_incorrect_birth_year_notification() -> tuple[str, None]:
         text = """
             <p>Здравствуйте!</p>
             <p>Ваш профиль был деактивирован, так как в настройках указан некорректный год рождения.<br/>
@@ -81,17 +86,7 @@ class UsedeskService:
             <hr/>
             <p>Вы можете написать в наш чат-бот <a href="https://t.me/leaderid_bot" target="_blank">Telegram</a></p>
         """.strip()
-
-        files = await self.prepare_files([])
-        return text, files
-
-    @staticmethod
-    async def prepare_files(file_paths: list = None) -> list[tuple[str, bytes] | None]:
-        files = []
-        for file_path in file_paths:
-            async with aiofiles.open(file_path, 'rb') as f:
-                files.append((file_path, await f.read()))
-        return files
+        return text, None
 
     @staticmethod
     async def get_current_agent_id() -> int | None:
@@ -121,7 +116,7 @@ class UsedeskService:
                 if weekday in schedule.weekdays and schedule.start_time <= current_time <= schedule.end_time:
                     return agent.usedesk_id
 
-    async def send_message(self, message, ticket_id, files=None) -> httpx.Response:
+    async def send_message(self, message, ticket_id, files: list[Path] | None = None) -> httpx.Response:
         agent_id = await self.get_current_agent_id()
         return await self.api_client.send_message(message=message, ticket_id=ticket_id, files=files, agent_id=agent_id)
 

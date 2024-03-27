@@ -35,8 +35,8 @@ class UserService:
             return False, "User activation is not required."
 
     async def load_user(self, user: str | int):
-        user_json_data = await self.api_client.get_user(user)
-        self.user = User.model_validate(user_json_data).data
+        user_json = await self.api_client.get_user(user)
+        self.user = User.model_validate(obj=user_json).data
         if self.user:
             logger.info(f'User data with id {self.user.id} has been successfully loaded.')
 

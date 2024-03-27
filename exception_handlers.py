@@ -31,7 +31,7 @@ async def httpx_http_status_error_handler(request: Request, exc: httpx.HTTPStatu
 
 async def httpx_request_error_handler(request: Request, exc: httpx.RequestError):
     logger.error(
-        f"httpx.RequestError: Internal server error occurred while making a request.")
+        f"httpx.RequestError: Internal server error occurred while making a request: {exc}, path: {request.url.path}")
     return JSONResponse(
         status_code=500,
         content={"message": "Internal server error occurred while making a request."}
