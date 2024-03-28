@@ -1,7 +1,5 @@
 import os
 
-from pathlib import Path
-
 import httpx
 
 from fastapi import FastAPI, Request, HTTPException
@@ -30,8 +28,6 @@ from bot.bot import router
 from dotenv import load_dotenv
 
 load_dotenv()
-
-PROJECT_ROOT = Path(__file__).resolve().parent
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 BOT_WEBHOOK_URL = os.getenv('BOT_WEBHOOK_URL')
@@ -80,7 +76,7 @@ async def startup():
         # Initialize and authenticate Leader-ID API client
         app.state.leader_api_client = LeaderAPIClient()  # API client
         app.state.leader_services = LeaderServices(app.state.leader_api_client)  # Service
-        await app.state.leader_services.authenticate(ADMIN_EMAIL, ADMIN_PASSWORD, token=TOKEN)  # Authenticate
+        await app.state.leader_services.authenticate(ADMIN_EMAIL, ADMIN_PASSWORD)  # Authenticate
 
         # Initialize and authenticate Usedesk API client
         app.state.usedesk_api_client = UsedeskAPIClient()  # API client

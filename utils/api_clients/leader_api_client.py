@@ -22,23 +22,19 @@ class LeaderAPIClient(BaseAPIClient):
     async def update_token(self, token: str) -> None:
         self.client.headers.update({"Authorization": f"Bearer {token}"})
 
-    async def authenticate(self, email, password, token=None) -> None:
-        if token is None:
-            url = "/auth/login"
-            data = {"email": email, "password": password}
-            response = await self._make_request(
-                "POST",
-                url,
-                should_retry=False,
-                allow_reauth=False,
-                json=data)
-            token = response.json()["data"]["access_token"]
-            self.client.headers.update({"Authorization": f"Bearer {token}"})
-            self.email = email
-            self.password = password
-
-        else:
-            await self.update_token(token)
+    async def authenticate(self, email, password) -> None:
+        url = "/auth/login"
+        data = {"email": email, "password": password}
+        response = await self._make_request(
+            "POST",
+            url,
+            should_retry=False,
+            allow_reauth=False,
+            json=data)
+        token = response.json()["data"]["access_token"]
+        self.client.headers.update({"Authorization": f"Bearer {token}"})
+        self.email = email
+        self.password = password
 
     async def _make_request(self, method: str, endpoint: str, allow_reauth=True, **kwargs) -> httpx.Response:
         try:

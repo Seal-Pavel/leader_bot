@@ -37,13 +37,14 @@ class UsedeskAPIClient(BaseAPIClient):
         kwargs["data"] = data
 
         # Prepare files, if available
-        file_paths = await self.prepare_files(file_paths) if file_paths else None
+        files = await self.prepare_files(file_paths) if file_paths else None
 
-        return await super().make_request(method, endpoint, files=file_paths, **kwargs)
+        return await super().make_request(method, endpoint, files=files, **kwargs)
 
     @staticmethod
-    async def prepare_files(file_paths) -> list[tuple[str, tuple[str, bytes]]] | None:
+    async def prepare_files(file_paths: list[Path] | None) -> list[tuple[str, tuple[str, bytes]]] | None:
         prepared_files = []
+
         for file_path in file_paths:
             async with aiofiles.open(file_path, 'rb') as f:
                 file_name = file_path.name
@@ -56,7 +57,7 @@ class UsedeskAPIClient(BaseAPIClient):
                            message,
                            ticket_id,
                            agent_id,
-                           files: list[Path] | None = None):
+                           file_paths: list[Path] | None = None):
         """
         https://api.usedocs.ru/article/33740
         """
@@ -67,7 +68,7 @@ class UsedeskAPIClient(BaseAPIClient):
             "user_id": agent_id,
             "from": "user",
         }
-        return await self._make_request("POST", "/create/comment", data=data, files=files)
+        return await self._make_request("POST", "/create/comment", data=data, file_paths=file_paths)
 
     async def update_ticket(self,
                             ticket_id,

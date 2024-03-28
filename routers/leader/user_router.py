@@ -26,7 +26,7 @@ async def reactivate_and_notify_user(ticket_request: TicketRequest = Depends(tic
                                      ):
     user_id = user_service.user.id
     user_birthday = user_service.user.birthday
-    notify_text = f'🔓 <a href="https://admin.leader-id.ru/users/{user_id}">{user_id}</a> ({user_birthday})'
+    notify_text = f'🔓 <a href="https://admin.leader-id.ru/users/{user_id}">{user_id}</a> ({user_birthday.year})'
 
     is_reactivate, reactivate_message = await user_service.reactivate()
     if is_reactivate:

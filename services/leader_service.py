@@ -12,8 +12,8 @@ class LeaderServices:
         self.user_service: UserService | None = None
         self.event_service: EventService | None = None
 
-    async def authenticate(self, email, password, token=None) -> None:
-        await self.api_client.authenticate(email, password, token)
+    async def authenticate(self, email, password) -> None:
+        await self.api_client.authenticate(email, password)
         self.user_service = UserService(self.api_client)
         self.event_service = EventService(self.api_client)
 

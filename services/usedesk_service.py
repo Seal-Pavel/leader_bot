@@ -5,8 +5,6 @@ from pathlib import Path
 
 from datetime import datetime, time
 
-from main import PROJECT_ROOT
-
 from models.ticket import TicketRequest
 from models.agents import Agent, Schedule
 
@@ -15,6 +13,7 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PERS_DATA_AGREE_PATH = PROJECT_ROOT / "statics/files/Согласие на обработку персональных данных.docx"
 PERS_DATA_AGREE_AND_DIST_PATH = PROJECT_ROOT / "statics/files/Согласие на распространение персональных данных.docx"
 
@@ -37,13 +36,14 @@ class UsedeskService:
     async def reply_to_reactivated_user(self, ticket_data, birthday) -> None:
         await self.load_ticket(ticket_data)
 
-        is_mistake_in_age = (datetime.now().year - birthday.year) < 12
+        birthday_plus_12_years = birthday.replace(year=birthday.year + 12)
+        is_mistake_in_age = datetime.now() < birthday_plus_12_years
         if not is_mistake_in_age:
-            text, files = await self.get_minor_notification()
+            text, file_paths = await self.get_minor_notification()
         else:
-            text, files = await self.get_incorrect_birth_year_notification()
+            text, file_paths = await self.get_incorrect_birth_year_notification()
 
-        await self.send_message(message=text, ticket_id=self.ticket.id, files=files)
+        await self.send_message(message=text, ticket_id=self.ticket.id, file_paths=file_paths)
         await self.update_ticket(ticket_id=self.ticket.id, category_lid="Редактирование профиля")
 
         logger.info(f"The user with email {self.ticket.client_email} will receive a response ({self.ticket.id=}).")
@@ -116,9 +116,12 @@ class UsedeskService:
                 if weekday in schedule.weekdays and schedule.start_time <= current_time <= schedule.end_time:
                     return agent.usedesk_id
 
-    async def send_message(self, message, ticket_id, files: list[Path] | None = None) -> httpx.Response:
+    async def send_message(self, message, ticket_id, file_paths: list[Path] | None = None) -> httpx.Response:
         agent_id = await self.get_current_agent_id()
-        return await self.api_client.send_message(message=message, ticket_id=ticket_id, files=files, agent_id=agent_id)
+        return await self.api_client.send_message(message=message,
+                                                  ticket_id=ticket_id,
+                                                  file_paths=file_paths,
+                                                  agent_id=agent_id)
 
     async def update_ticket(self, ticket_id, category_lid) -> httpx.Response:
         return await self.api_client.update_ticket(ticket_id, category_lid)
