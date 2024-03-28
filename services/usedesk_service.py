@@ -117,6 +117,7 @@ class UsedeskService:
                     return agent.usedesk_id
 
     async def send_message(self, message, ticket_id, file_paths: list[Path] | None = None) -> httpx.Response:
+        # TODO: если не находит агента на смене, пишет от имени usedeskBOT
         agent_id = await self.get_current_agent_id()
         return await self.api_client.send_message(message=message,
                                                   ticket_id=ticket_id,

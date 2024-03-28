@@ -1,0 +1,10 @@
+aiofiles
+aiogram
+fastapi
+uvicorn
+pydantic
+celery
+httpx
+python-dotenv
+pymongo
+redis

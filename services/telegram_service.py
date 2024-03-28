@@ -18,7 +18,5 @@ class TelegramService:
         if not notify_text:
             notify_text = "The user is unblocked."
 
-        logger.info(f"Try to receive notification for user in chat with id {self.chat_id}")
         await self.api_client.send_message(notify_text, chat_id=self.chat_id, **kwargs)
-
         logger.info(f"{notify_text}")
