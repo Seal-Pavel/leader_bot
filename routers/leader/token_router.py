@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.post("/update-leader-token")
+@router.post("/token/update")
 async def update_token(request: Request, token: str = Body(..., embed=True)):
     if not token:
         logger.info("TEST")
