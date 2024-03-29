@@ -32,8 +32,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-BOT_WEBHOOK_URL = os.getenv('BOT_WEBHOOK_URL')
+BOT_WEBHOOK_HOST = os.getenv('BOT_WEBHOOK_HOST')
 BOT_WEBHOOK_PATH = os.getenv('BOT_WEBHOOK_PATH')
+BOT_WEBHOOK_URL = f"{BOT_WEBHOOK_HOST}{BOT_WEBHOOK_PATH}"
+
 TEAM_TELEGRAM_CHAT_ID = os.getenv('TEAM_TELEGRAM_CHAT_ID')
 
 USEDESK_API_TOKEN = os.getenv('USEDESK_API_TOKEN')
@@ -78,32 +80,37 @@ async def startup():
     """
     Webhook registration and API clients initialization.
     """
-    webhook_url = f"{BOT_WEBHOOK_URL}{BOT_WEBHOOK_PATH}"
-    await bot.set_webhook(webhook_url)
-    logger.info(f"Webhook URL: {webhook_url}")
-
-    await set_commands(bot)
-
     try:
-        # Initialize and authenticate Leader-ID API client.
-        app.state.leader_api_client = LeaderAPIClient()  # API client
-        app.state.leader_services = LeaderServices(app.state.leader_api_client)  # Service
-        await app.state.leader_services.authenticate(ADMIN_EMAIL, ADMIN_PASSWORD)  # Authenticate
-
-        # Initialize and authenticate Usedesk API client
-        app.state.usedesk_api_client = UsedeskAPIClient()  # API client
-        app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)  # Service
-        await app.state.usedesk_service.authenticate(USEDESK_API_TOKEN)  # Authenticate
+        logger.info(f"Webhook URL: {BOT_WEBHOOK_URL}")
+        await bot.set_webhook(BOT_WEBHOOK_URL)
+        await set_commands(bot)
 
         # Initialize and authenticate Telegram API client
-        app.state.telegram_api_client = TelegramAPIClient()  # API client
-        app.state.telegram_service = TelegramService(app.state.telegram_api_client, TEAM_TELEGRAM_CHAT_ID)  # Sservice
-        await app.state.telegram_service.authenticate(BOT_TOKEN)  # Authenticate
+        try:
+            app.state.telegram_api_client = TelegramAPIClient()
+            app.state.telegram_service = TelegramService(app.state.telegram_api_client, TEAM_TELEGRAM_CHAT_ID)
+            await app.state.telegram_service.authenticate(BOT_TOKEN)
+        except CaptchaNotSetException as exc:
+            logger.error(f"Authentication error: {exc}")
 
-    except CaptchaNotSetException as exc:
-        logger.error(f"Authentication error: {exc}")
+        # Initialize and authenticate Usedesk API client
+        try:
+            app.state.usedesk_api_client = UsedeskAPIClient()
+            app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)
+            await app.state.usedesk_service.authenticate(USEDESK_API_TOKEN)
+        except CaptchaNotSetException as exc:
+            logger.error(f"Authentication error: {exc}")
+
+        # Initialize and authenticate Leader-ID API client.
+        try:
+            app.state.leader_api_client = LeaderAPIClient()
+            app.state.leader_services = LeaderServices(app.state.leader_api_client)
+            await app.state.leader_services.authenticate(ADMIN_EMAIL, ADMIN_PASSWORD)
+        except CaptchaNotSetException as exc:
+            logger.error(f"Authentication error: {exc}")
+
     except Exception as e:
-        logger.error(f"Error while initializing usedesk_service: {e}")
+        logger.error(f"Error at startup: {e}")
 
 
 @app.on_event("shutdown")
