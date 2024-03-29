@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from models.ticket import TicketRequest
 
@@ -34,3 +34,11 @@ async def reactivate_and_notify_user(ticket_request: TicketRequest = Depends(tic
         await telegram_service.user_reactivation_notification(notify_text)
 
     return {"message": reactivate_message}
+
+
+@router.get("/debug/state")
+async def get_app_state(request: Request):
+    return {
+        "usedesk_service_initialized": "usedesk_service" in request.app.state,
+        "telegram_service_initialized": "telegram_service" in request.app.state,
+    }
