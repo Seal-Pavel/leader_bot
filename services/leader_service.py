@@ -9,13 +9,11 @@ logger = get_logger(__name__)
 class LeaderServices:
     def __init__(self, api_client: LeaderAPIClient):
         self.api_client: LeaderAPIClient = api_client
-        self.user_service: UserService | None = None
-        self.event_service: EventService | None = None
+        self.user_service = UserService(self.api_client)
+        self.event_service = EventService(self.api_client)
 
     async def authenticate(self, email, password) -> None:
         await self.api_client.authenticate(email, password)
-        self.user_service = UserService(self.api_client)
-        self.event_service = EventService(self.api_client)
 
     async def update_token(self, token: str) -> None:
         await self.api_client.update_token(token)
