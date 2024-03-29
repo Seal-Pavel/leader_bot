@@ -82,7 +82,7 @@ async def startup():
     await set_commands(bot)
 
     try:
-        # Initialize and authenticate Leader-ID API client
+        # Initialize and authenticate Leader-ID API client.
         app.state.leader_api_client = LeaderAPIClient()  # API client
         app.state.leader_services = LeaderServices(app.state.leader_api_client)  # Service
         await app.state.leader_services.authenticate(ADMIN_EMAIL, ADMIN_PASSWORD)  # Authenticate
