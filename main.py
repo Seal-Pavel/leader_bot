@@ -23,6 +23,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 
+from redis.asyncio import Redis
+
 from bot.bot import router
 
 from dotenv import load_dotenv
@@ -40,7 +42,7 @@ ADMIN_EMAIL = os.getenv('LEADER_ID_ADMIN_EMAIL')
 ADMIN_PASSWORD = os.getenv('LEADER_ID_ADMIN_PASSWORD')
 TOKEN = os.getenv('LEADER_ID_BEARER_TOKEN')
 
-REDIS_URL = os.getenv('REDIS_URL')
+REDIS_HOST = os.getenv('REDIS_HOST')
 
 logger = get_logger(__name__)
 
@@ -58,7 +60,8 @@ app.include_router(leader_user_router, prefix="/api/v1", tags=["Leader-ID"])
 app.include_router(leader_token_router, prefix="/api/v1", tags=["Leader-ID"])
 
 bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
-storage = RedisStorage.from_url(REDIS_URL)
+r = Redis(host=REDIS_HOST)
+storage = RedisStorage(r)
 dp = Dispatcher(storage=storage)
 dp.include_router(router)
 
