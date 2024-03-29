@@ -4,14 +4,14 @@ metadata:
   name: leader-bot-ingress
   namespace: leader-bot
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /webhook/leader-bot
     nginx.ingress.kubernetes.io/proxy-body-size: "4M"
 spec:
   ingressClassName: nginx
   rules:
   - http:
       paths:
-      - path: /leader-bot/
+      - path: /leader/webhook/leader-bot
         pathType: Prefix
         backend:
           service:
