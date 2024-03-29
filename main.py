@@ -102,6 +102,8 @@ async def startup():
 
     except CaptchaNotSetException as exc:
         logger.error(f"Authentication error: {exc}")
+    except Exception as e:
+        logger.error(f"Error while initializing usedesk_service: {e}")
 
 
 @app.on_event("shutdown")
