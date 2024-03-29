@@ -1,0 +1,49 @@
+name: Django CI/CD (leader-bot)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  # Job для пуша и проверки образа
+  Docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build and Push Docker image
+        run: |
+          docker build --no-cache -t ${{ secrets.DOCKERHUB_USERNAME }}/leader-bot:${{ github.sha }} -t ${{ secrets.DOCKERHUB_USERNAME }}/leader-bot:latest .
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/leader-bot:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/leader-bot:latest
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/leader-bot:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+  # Job для деплоя
+  Kuber:
+    needs: Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: tale/kubectl-action@v1
+        with:
+          base64-kube-config: ${{ secrets.KUBE_CONFIG_DATA }}
+      - name: Deploy to Kubernetes and apply manifests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          kubectl apply -f k8s/namespace-leader-bot.yaml
+          kubectl apply -f k8s/leader-bot-ingress.yaml
+          kubectl apply -f k8s/leader-bot-service.yaml
+          kubectl apply -f k8s/leader-bot-deployment.yaml
+
+          kubectl set image deployment/leader-bot-deployment leader-bot=${{ secrets.DOCKERHUB_USERNAME }}/leader-bot:${{ github.sha }} -n leader-bot

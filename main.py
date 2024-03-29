@@ -63,6 +63,13 @@ dp = Dispatcher(storage=storage)
 dp.include_router(router)
 
 
+async def set_commands(bot: Bot):
+    commands = [
+        types.BotCommand(command="/help", description="Помощь"),
+    ]
+    await bot.set_my_commands(commands)
+
+
 @app.on_event("startup")
 async def startup():
     """
@@ -71,6 +78,8 @@ async def startup():
     webhook_url = f"{BOT_WEBHOOK_URL}{BOT_WEBHOOK_PATH}"
     await bot.set_webhook(webhook_url)
     logger.info(f"Webhook URL: {webhook_url}")
+
+    await set_commands(bot)
 
     try:
         # Initialize and authenticate Leader-ID API client

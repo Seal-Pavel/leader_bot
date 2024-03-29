@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leader-bot-deployment
+  namespace: leader-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leader-bot
+  template:
+    metadata:
+      labels:
+        app: leader-bot
+    spec:
+
+      containers:
+        - name: leader-bot
+          image: sealpavel/leader-bot:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: leader-bot-secret
