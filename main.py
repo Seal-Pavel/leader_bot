@@ -86,26 +86,21 @@ async def startup():
         await set_commands(bot)
 
         # Initialize and authenticate Telegram API client
-        try:
-            app.state.telegram_api_client = TelegramAPIClient()
-            app.state.telegram_service = TelegramService(app.state.telegram_api_client, TEAM_TELEGRAM_CHAT_ID)
-            await app.state.telegram_service.authenticate(BOT_TOKEN)
-        except CaptchaNotSetException as exc:
-            logger.error(f"Authentication error: {exc}")
+        app.state.telegram_api_client = TelegramAPIClient()
+        app.state.telegram_service = TelegramService(app.state.telegram_api_client, TEAM_TELEGRAM_CHAT_ID)
+        await app.state.telegram_service.authenticate(BOT_TOKEN)
 
         # Initialize and authenticate Usedesk API client
-        try:
-            app.state.usedesk_api_client = UsedeskAPIClient()
-            app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)
-            await app.state.usedesk_service.authenticate(USEDESK_API_TOKEN)
-        except CaptchaNotSetException as exc:
-            logger.error(f"Authentication error: {exc}")
+        app.state.usedesk_api_client = UsedeskAPIClient()
+        app.state.usedesk_service = UsedeskService(app.state.usedesk_api_client)
+        await app.state.usedesk_service.authenticate(USEDESK_API_TOKEN)
 
         # Initialize and authenticate Leader-ID API client.
         try:
             app.state.leader_api_client = LeaderAPIClient()
             app.state.leader_services = LeaderServices(app.state.leader_api_client)
             await app.state.leader_services.authenticate(ADMIN_EMAIL, ADMIN_PASSWORD)
+
         except CaptchaNotSetException as exc:
             logger.error(f"Authentication error: {exc}")
 
