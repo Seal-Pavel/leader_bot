@@ -54,8 +54,8 @@ app.add_exception_handler(Exception, eh.generic_exception_handler)
 app.add_exception_handler(UserNotFoundException, eh.user_not_found_exception_handler)
 app.add_exception_handler(CaptchaNotSetException, eh.captcha_not_set_exception_handler)
 
-app.include_router(leader_user_router, prefix="/api/v1/leader", tags=["Leader-ID"])
-app.include_router(leader_token_router, prefix="/api/v1/leader", tags=["Leader-ID"])
+app.include_router(leader_user_router, prefix="/leader/api/v1", tags=["Leader-ID"])
+app.include_router(leader_token_router, prefix="/leader/api/v1", tags=["Leader-ID"])
 
 bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
 storage = RedisStorage.from_url(REDIS_URL)
