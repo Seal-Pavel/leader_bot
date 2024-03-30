@@ -36,7 +36,7 @@ class UserService:
         try:
             user_json = await self.api_client.get_user(user)
         except Exception as e:
-            logger.error(f'User ({user}) Not Found.')
+            logger.error(f'User ({user}). "get_user" exception: {e}')
             raise
         self.user = User.model_validate(obj=user_json).data
         if self.user:
