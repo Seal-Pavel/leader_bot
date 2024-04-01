@@ -5,13 +5,13 @@ from datetime import datetime
 class UserData(BaseModel):
     id: int
     email: str
-    name: str
-    status: int
-    birthday: datetime
-    emailConfirmed: bool
-    agreement: bool
-    lastSeen: datetime
-    createdAt: datetime
+    name: str | None
+    status: int | None
+    birthday: datetime | None
+    emailConfirmed: bool | None
+    agreement: bool | None
+    lastSeen: datetime | None
+    createdAt: datetime | None
 
     class Config:
         extra = Extra.allow
