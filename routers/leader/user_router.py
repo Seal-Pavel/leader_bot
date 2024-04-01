@@ -19,11 +19,16 @@ router = APIRouter()
 
 
 @router.post("/user/reactivate-and-notify")
-async def reactivate_and_notify_user(ticket_request: TicketRequest = Depends(ticket_request_dependency),
+async def reactivate_and_notify_user(request: Request,
+                                     ticket_request: TicketRequest = Depends(ticket_request_dependency),
                                      user_service: UserService = Depends(user_service_dependency),
                                      usedesk_service: UsedeskService = Depends(usedesk_service_dependency),
                                      telegram_service: TelegramService = Depends(telegram_service_dependency),
                                      ):
+    request_body = await request.json()
+    logger.debug(f"-> Received request body: {request_body=}")
+    logger.debug(f"-> Received request ticket body: {ticket_request=}")
+
     user_id = user_service.user.id
     user_birthday = user_service.user.birthday
     notify_text = f'🔓 <a href="https://admin.leader-id.ru/users/{user_id}">{user_id}</a> ({user_birthday.year})'
