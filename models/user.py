@@ -4,19 +4,14 @@ from datetime import datetime
 
 class UserData(BaseModel):
     id: int
-    email: str | None
-    last_name: str
-    first_name: str
-    father_name: str | None
+    email: str
+    name: str
     status: int
-    gender: str
     birthday: datetime
-    email_confirmed: bool
-    personal_data_agreement: bool
+    emailConfirmed: bool
     agreement: bool
-    last_seen: datetime
-    age: int
-    registrationAt: datetime
+    lastSeen: datetime
+    createdAt: datetime
 
     class Config:
         extra = Extra.allow

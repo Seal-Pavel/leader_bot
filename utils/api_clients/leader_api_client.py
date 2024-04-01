@@ -69,7 +69,7 @@ class LeaderAPIClient(BaseAPIClient):
         else:
             user_id = user
 
-        url = f"/users/{user_id}"
+        url = f"/admin/users/{user_id}"
         response = await self._make_request(
             "GET",
             url)
