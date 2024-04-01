@@ -28,6 +28,7 @@ class UsedeskService:
     def __init__(self, api_client: UsedeskAPIClient):
         self.api_client = api_client
         self.ticket: TicketRequest | None = None
+        self.current_agent_id: int | None = None
 
     async def authenticate(self, token) -> None:
         await self.api_client.authenticate(token)
@@ -90,8 +91,11 @@ class UsedeskService:
         """.strip()
         return text, None
 
-    @staticmethod
-    async def get_current_agent_id() -> int | None:
+    async def set_current_agent_id(self, agent_id=None) -> None:
+        if agent_id:
+            self.current_agent_id = agent_id
+            return None
+
         agents = [
             Agent(usedesk_id=USEDESK_PAVEL_ID,
                   name="Pavel",
@@ -117,15 +121,15 @@ class UsedeskService:
         for agent in agents:
             for schedule in agent.schedule:
                 if weekday in schedule.weekdays and schedule.start_time <= current_time <= schedule.end_time:
-                    return agent.usedesk_id
+                    self.current_agent_id = agent.usedesk_id
+                    return None
 
     async def send_message(self, message, ticket_id, file_paths: list[Path] | None = None) -> httpx.Response:
-        # TODO: если не находит агента на смене, пишет от имени usedeskBOT
-        agent_id = await self.get_current_agent_id()
+        await self.set_current_agent_id()
         return await self.api_client.send_message(message=message,
                                                   ticket_id=ticket_id,
                                                   file_paths=file_paths,
-                                                  agent_id=agent_id)
+                                                  agent_id=self.current_agent_id)
 
     async def update_ticket(self, ticket_id, category_lid) -> httpx.Response:
         return await self.api_client.update_ticket(ticket_id, category_lid)
