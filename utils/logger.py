@@ -3,7 +3,7 @@ import logging
 
 def get_logger(name: str):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     # Обработчик, который выводит сообщения в stdout
     handler = logging.StreamHandler()
