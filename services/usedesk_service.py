@@ -1,5 +1,7 @@
 import os
+
 import httpx
+import pytz
 
 from pathlib import Path
 
@@ -107,7 +109,8 @@ class UsedeskService:
                                      start_time=time(10, 0),
                                      end_time=time(18, 0))]),
         ]
-        now = datetime.now()
+        tz = pytz.timezone('Europe/Moscow')
+        now = datetime.now(tz)
         weekday = now.weekday()
         current_time = now.time()
 
