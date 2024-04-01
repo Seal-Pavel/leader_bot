@@ -32,9 +32,9 @@ async def auth_command(message: types.Message, command: CommandObject):
 
     else:
         url = "https://seal-pavel.website/leader/api/v1/token/update"
-        json = {"token": token}
-        res = await api_client.make_request(method="POST", endpoint=url, json=json)
-        text = res.text
+        data = {"token": token}
+        res = await api_client.make_request(method="POST", endpoint=url, json=data)
+        text = res.json().get("message", res.text)
 
     await message.answer(disable_notification=True, text=text)
     await message.delete()
