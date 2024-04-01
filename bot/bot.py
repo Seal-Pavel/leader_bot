@@ -24,15 +24,17 @@ async def auth_command(message: types.Message, command: CommandObject):
     token = command.args
 
     if not token or "eyJ0eXAiOi...Lbs" in token:
-        await message.answer(
-            disable_notification=True,
-            text='Необходимы дополнительные аргументы.\n'
-                 'Пример:\n'
-                 '<code>/auth eyJ0eXAiOi...Lbs</code>\n'
-                 'или\n'
-                 '<code>/auth Bearer eyJ0eXAiOi...Lbs</code>')
-        return
+        text = "Необходимы дополнительные аргументы.\n" \
+               "Пример:\n" \
+               "<code>/auth eyJ0eXAiOi...Lbs</code>\n" \
+               "или\n" \
+               "<code>/auth Bearer eyJ0eXAiOi...Lbs</code>"
 
-    url = "https://seal-pavel.website/leader/api/v1/token/update"
-    json = {"token": token}
-    await api_client.make_request(method="POST", endpoint=url, json=json)
+    else:
+        url = "https://seal-pavel.website/leader/api/v1/token/update"
+        json = {"token": token}
+        res = await api_client.make_request(method="POST", endpoint=url, json=json)
+        text = res.text
+
+    await message.answer(disable_notification=True, text=text)
+    await message.delete()
