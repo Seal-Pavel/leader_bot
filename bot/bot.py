@@ -15,8 +15,8 @@ async def help_command(message: types.Message):
 
     await message.reply(
         disable_notification=True,
-        text=f'ID этого чата: {chat_id}\nТвой ID: {user_id}',
-    )
+        text=f'ID этого чата: {chat_id}\n'
+             f'Твой ID: {user_id}')
 
 
 @router.message(Command(commands=["auth"]))
@@ -26,10 +26,17 @@ async def auth_command(message: types.Message, command: CommandObject):
     if not token:
         await message.reply(
             disable_notification=True,
-            text='Для использования команды ей необходимо передать дополнительные аргументы.\n'
+            text='Необходимы дополнительные аргументы.\n'
                  'Пример:\n'
-                 '<code>/auth eyJ0eXAiOi...Lbs</code> или <code>/auth Bearer eyJ0eXAiOi...Lbs</code>',
-        )
+                 '<code>/auth eyJ0eXAiOi...Lbs</code>\n'
+                 'или\n'
+                 '<code>/auth Bearer eyJ0eXAiOi...Lbs</code>')
+        return
+
+    if "eyJ0eXAiOi...Lbs" in token:
+        await message.reply(
+            disable_notification=True,
+            text='Нет. Это просто пример')
         return
 
     url = "https://seal-pavel.website/leader/api/v1/token/update"
