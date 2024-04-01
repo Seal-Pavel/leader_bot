@@ -31,9 +31,10 @@ class BaseAPIClient:
         self.client = httpx.AsyncClient(base_url=base_url)
         self.retry_attempts = retry_attempts
         self.retry_delay = retry_delay
-        self.limiter_rate = limiter_rate
-        self.limiter_period = limiter_period
-        self.limiter = AsyncSlidingWindowLimiter(rate=self.limiter_rate, period=self.limiter_period)
+        self.limiter = AsyncSlidingWindowLimiter(
+            rate=limiter_rate if limiter_rate is not None else 5,
+            period=limiter_period if limiter_period is not None else timedelta(seconds=1)
+        )
 
     async def make_request(self,
                            method: str,
