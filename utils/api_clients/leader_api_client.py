@@ -20,7 +20,9 @@ class LeaderAPIClient(BaseAPIClient):
         self.password = None
 
     async def update_token(self, token: str) -> None:
-        self.client.headers.update({"Authorization": f"Bearer {token}"})
+        if not token.startswith("Bearer "):
+            token = f"Bearer {token}"
+        self.client.headers.update({"Authorization": token})
 
     async def authenticate(self, email, password) -> None:
         url = "/auth/login"
