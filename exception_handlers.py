@@ -30,7 +30,9 @@ async def httpx_http_status_error_handler(request: Request, exc: httpx.HTTPStatu
 
     if exc.response.status_code == 401:
         telegram_api_client: TelegramAPIClient = request.app.state.telegram_api_client
-        await telegram_api_client.send_message(text=exc.response.text, chat_id=TEAM_TELEGRAM_CHAT_ID)
+        text = ("Токен протух\n"
+                "Обновите, пожалуйста, токен командой <code>/auth </code>")
+        await telegram_api_client.send_message(text=text, chat_id=TEAM_TELEGRAM_CHAT_ID)
 
     return JSONResponse(
         status_code=exc.response.status_code,
