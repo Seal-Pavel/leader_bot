@@ -71,6 +71,7 @@ dp.include_router(router)
 async def set_commands(bot: Bot):
     commands = [
         types.BotCommand(command="/help", description="Помощь"),
+        types.BotCommand(command="/auth", description="Авторизация"),
     ]
     await bot.set_my_commands(commands)
 
