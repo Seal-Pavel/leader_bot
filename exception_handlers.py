@@ -1,3 +1,4 @@
+import os
 import httpx
 
 from fastapi import HTTPException
@@ -6,9 +7,12 @@ from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 
 from utils.api_clients.leader_api_client import UserNotFoundException, CaptchaNotSetException
+from utils.api_clients.telegram_api_client import TelegramAPIClient
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+TEAM_TELEGRAM_CHAT_ID = os.getenv('TEAM_TELEGRAM_CHAT_ID')
 
 
 async def fastapi_http_exception_handler(request: Request, exc: HTTPException):
@@ -23,6 +27,11 @@ async def fastapi_http_exception_handler(request: Request, exc: HTTPException):
 async def httpx_http_status_error_handler(request: Request, exc: httpx.HTTPStatusError):
     logger.error(
         f"httpx.HTTPStatusError: status code {exc.response.status_code}, detail: {exc.response.text}, path: {request.url.path}")
+
+    if exc.response.status_code == 401:
+        telegram_api_client: TelegramAPIClient = request.app.state.telegram_api_client
+        await telegram_api_client.send_message(text=exc.response.text, chat_id=TEAM_TELEGRAM_CHAT_ID)
+
     return JSONResponse(
         status_code=exc.response.status_code,
         content={"message": exc.response.text}

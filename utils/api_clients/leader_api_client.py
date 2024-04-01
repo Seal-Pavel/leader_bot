@@ -19,6 +19,7 @@ class LeaderAPIClient(BaseAPIClient):
         self.email = None
         self.password = None
 
+    # TODO: Добавить сразу проверку валидности токена
     async def update_token(self, token: str) -> None:
         if not token.startswith("Bearer "):
             token = f"Bearer {token}"
