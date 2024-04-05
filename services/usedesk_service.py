@@ -42,7 +42,12 @@ class UsedeskService:
         birthday_plus_12_years = birthday.replace(year=birthday.year + 12)
         is_mistake_in_age = datetime.now() < birthday_plus_12_years
         if not is_mistake_in_age:
-            text, file_paths = await self.get_minor_notification()
+            birthday_plus_18_years = birthday.replace(year=birthday.year + 18)
+            is_adult = datetime.now() >= birthday_plus_18_years
+            if is_adult:
+                text, file_paths = await self.get_adult_notification()
+            else:
+                text, file_paths = await self.get_minor_notification()
         else:
             text, file_paths = await self.get_incorrect_birth_year_notification()
 
@@ -89,6 +94,24 @@ class UsedeskService:
             <hr/>
             <p>Вы можете написать в наш чат-бот <a href="https://t.me/leaderid_bot" target="_blank">Telegram</a></p>
         """.strip()
+        return text, None
+
+    @staticmethod
+    async def get_adult_notification():
+        text = """
+                    <p>Здравствуйте!</p>
+                    <p>Восстановили ваш профиль. Пожалуйста, повторите вход в аккаунт.</p>
+                    <br/>
+                    <p>Просим вас пройти небольшой <a href="https://pnp.leader-id.ru/polls/p/67645e46-f179-45f1-8caf-50ec0bcd99c8/" target="_blank">опрос удовлетворенности поддержкой</a>. Это позволит нам улучшить ее качество.</p>
+                    <br/>
+                    <p>Если у вас остались вопросы, мы с радостью на них ответим.<br/>
+                    Служба поддержки Leader-ID.<br/>
+                    <a href="mailto:support@leader-id.ru">support@leader-id.ru</a></p>
+                    <hr/>
+                    <p>Основные вопросы и ответы в разделе «<a href="http://leader-id.usedocs.com/">Частые вопросы</a>»</p>
+                    <hr/>
+                    <p>Вы можете написать в наш чат-бот <a href="https://t.me/leaderid_bot" target="_blank">Telegram</a></p>
+                """.strip()
         return text, None
 
     async def set_current_agent_id(self, agent_id=None) -> None:
