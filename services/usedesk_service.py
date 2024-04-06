@@ -39,25 +39,29 @@ class UsedeskService:
     async def reply_to_reactivated_user(self, ticket_data, birthday) -> None:
         await self.load_ticket(ticket_data)
 
-        birthday_plus_12_years = birthday.replace(year=birthday.year + 12)
-        is_mistake_in_age = datetime.now() < birthday_plus_12_years
-        if not is_mistake_in_age:
-            birthday_plus_18_years = birthday.replace(year=birthday.year + 18)
-            is_adult = datetime.now() >= birthday_plus_18_years
-            if is_adult:
-                text, file_paths = await self.get_adult_notification()
-            else:
-                text, file_paths = await self.get_minor_notification()
-        else:
-            text, file_paths = await self.get_incorrect_birth_year_notification()
+        text, file_paths = await self.get_notification_by_age(birthday)
 
         await self.send_message(message=text, ticket_id=self.ticket.id, file_paths=file_paths)
         await self.update_ticket(ticket_id=self.ticket.id, category_lid="Редактирование профиля")
 
         logger.info(f"The user with email {self.ticket.client_email} will receive a response ({self.ticket.id=}).")
 
+    async def get_notification_by_age(self, birthday) -> (str, list):
+        current_time = datetime.now()
+        birthday_plus_12_years = birthday.replace(year=birthday.year + 12)
+        birthday_plus_18_years = birthday.replace(year=birthday.year + 18)
+        is_mistake_in_age = current_time < birthday_plus_12_years
+        is_adult = current_time >= birthday_plus_18_years
+
+        if is_mistake_in_age:
+            return await self.get_incorrect_birth_year_notification()
+        elif is_adult:
+            return await self.get_adult_notification()
+        else:
+            return await self.get_teenager_notification()
+
     @staticmethod
-    async def get_minor_notification() -> tuple[str, list[Path]]:
+    async def get_teenager_notification() -> tuple[str, list[Path]]:
         text = """
             <p>Здравствуйте!</p>
             <p>Ваш профиль был деактивирован по причине того, что вы не загрузили сканы согласий родителей на обработку ваших персональных данных в свой профиль.<br/>
@@ -97,7 +101,7 @@ class UsedeskService:
         return text, None
 
     @staticmethod
-    async def get_adult_notification():
+    async def get_adult_notification() -> tuple[str, None]:
         text = """
                     <p>Здравствуйте!</p>
                     <p>Восстановили ваш профиль. Пожалуйста, повторите вход в аккаунт.</p>
